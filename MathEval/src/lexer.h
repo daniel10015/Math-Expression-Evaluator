@@ -42,6 +42,7 @@ public:
 	Token GetToken();
 	Token peek(int);
 	LexicalAnalyzer(std::string input = "");
+	inline size_t GetNumOfToks() { return tokenList.size(); }
 private:
 	bool PassInput(std::string); // returns true upon success
 	std::vector<Token> tokenList;

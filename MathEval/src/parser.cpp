@@ -33,11 +33,16 @@ parser::~parser()
 {
 	if (lex)
 		delete lex;
+	if (tree_node_memory)
+		delete[] tree_node_memory;
 }
 
 parser::parser(std::string input)
 {
 	lex = new LexicalAnalyzer(input);
+
+	number_of_tree_nodes = lex->GetNumOfToks();
+	tree_node_memory = new tree_node[number_of_tree_nodes];
 
 	infix_precedence[END_OF_FILE] = -1;
 	infix_precedence[VAR] = 0;
@@ -254,7 +259,7 @@ tree_node* parser::parse_expr(int8_t precedence)
 #endif
 		op = lex->GetToken();
 		temp = left;
-		left = new tree_node{}; //{ BINARY_OP, left, parse_expr( getInfixPrecedence(op.token_type) ), GetBinOp(op.token_type) }; // lhs, rhs, op
+		left = &(tree_node_memory[tree_node_idx++]); // new tree_node{}; //{ BINARY_OP, left, parse_expr( getInfixPrecedence(op.token_type) ), GetBinOp(op.token_type) }; // lhs, rhs, op
 		left->type = BINARY_OP;
 		left->binary_op.lhs = temp; // previous left
 		left->binary_op.rhs = parse_expr(getInfixPrecedence(op.token_type));
@@ -275,7 +280,7 @@ tree_node* parser::parse_prefix()
 #ifdef DEBUG_PARSER
 		cout << "is identifier\n";
 #endif
-		tree_node* node = new tree_node{};// { PREFIX_OP, nullptr, nullptr, static_cast<bin_op>(0)}; // union cheese jazz club
+		tree_node* node = &(tree_node_memory[tree_node_idx++]); //new tree_node{};// { PREFIX_OP, nullptr, nullptr, static_cast<bin_op>(0)}; // union cheese jazz club
 		node->type = PREFIX_OP;
 		node->prefix_op.lexeme = new std::string(); // static initialization (added line)
 		*(node->prefix_op.lexeme) = t1.lexeme;
@@ -298,7 +303,7 @@ tree_node* parser::parse_prefix()
 				return parse_expr(0); // reset precedence
 			else
 			{
-				tree_node* temp_tn = new tree_node{}; // {PREFIX_OP, nullptr, nullptr, static_cast<bin_op>(0)};
+				tree_node* temp_tn = &(tree_node_memory[tree_node_idx++]); //new tree_node{}; // {PREFIX_OP, nullptr, nullptr, static_cast<bin_op>(0)};
 				temp_tn->type = PREFIX_OP;
 				temp_tn->prefix_op.op = GetUnaryOp(t1.token_type);
 				temp_tn->prefix_op.next = parse_expr(0);

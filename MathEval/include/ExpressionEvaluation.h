@@ -7,10 +7,11 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <math.h>
+#include <numeric>    // for std::accumulate
 
 
 // untested
-#include <numeric>    // for std::accumulate
 // Custom hash function for std::array<float, S>
 template<std::size_t S>
 struct std::hash<std::array<float, S>> {
@@ -42,11 +43,12 @@ public:
 	MathEvaluator() = delete;
 	// function_inputs corresponds string -> idx, idx element of (0, S-1)
 	MathEvaluator(const std::string& math_expr_input, std::unordered_map<std::string, size_t>& function_inputs);
+    ~MathEvaluator();
 	float Evaluate(const std::array<float, S>& inputs, bool store = false);
 	static void Setup(void);
 private:
 	parser* m_pParser;
-	tree_node* m_root;;
+	tree_node* m_root;
 	std::unordered_map<std::array<float, S>, float> m_cache;
 	std::unordered_map<std::string, size_t> *m_function_inputs;
 	// function pointer array
@@ -67,11 +69,12 @@ std::vector<std::function<float(float, float)>> MathEvaluator<S>::s_twoParameter
 template <size_t S>
 std::vector<std::function<float(float)>> MathEvaluator<S>::s_oneParameterFunctions;
 
-
-
-
-#include "../include/ExpressionEvaluation.h"
-#include <math.h>
+template <size_t S>
+MathEvaluator<S>::~MathEvaluator()
+{
+    if (m_pParser)
+        delete m_pParser;
+}
 
 template <size_t S>
 MathEvaluator<S>::MathEvaluator(const std::string& math_expr_input, std::unordered_map<std::string, size_t>& function_inputs)

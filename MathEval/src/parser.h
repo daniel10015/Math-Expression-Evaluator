@@ -121,6 +121,11 @@ private:
 	int line_no = 1;
 	std::vector<string> function_name;
 
+	//
+	tree_node* tree_node_memory = nullptr;
+	size_t number_of_tree_nodes = 0;
+	size_t tree_node_idx = 0;
+
 	// parsing handlers
 	Token expect(TokenType);
 	void syntaxError();
