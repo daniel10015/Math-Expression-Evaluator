@@ -11,7 +11,7 @@
 #include <numeric>    // for std::accumulate
 
 
-// untested
+
 // Custom hash function for std::array<float, S>
 template<std::size_t S>
 struct std::hash<std::array<float, S>> {
@@ -34,8 +34,7 @@ float func_exp(float t1);
 float func_sin(float t1);
 float func_cos(float t1);
 
-// cache the computation 
-// should test if caching is faster or not
+// Evaluates arbitrary math functions
 template <size_t S>
 class MathEvaluator
 {
@@ -47,8 +46,8 @@ public:
 	float Evaluate(const std::array<float, S>& inputs, bool store = false);
 	static void Setup(void);
 private:
-	parser* m_pParser;
-	tree_node* m_root;
+	Lexer::parser* m_pParser;
+	Lexer::tree_node* m_root;
 	std::unordered_map<std::array<float, S>, float> m_cache;
 	std::unordered_map<std::string, size_t> *m_function_inputs;
 	// function pointer array
@@ -58,7 +57,7 @@ private:
 	static std::vector<std::function<float(float)>> s_oneParameterFunctions;
 
 private: // herlper functions
-	float Evaluate_recursive(const std::array<float, S>&, tree_node* curr);
+	float Evaluate_recursive(const std::array<float, S>&, Lexer::tree_node* curr);
 
 private: // functions
 };
@@ -79,7 +78,7 @@ MathEvaluator<S>::~MathEvaluator()
 template <size_t S>
 MathEvaluator<S>::MathEvaluator(const std::string& math_expr_input, std::unordered_map<std::string, size_t>& function_inputs)
 {
-    m_pParser = new parser(math_expr_input);
+    m_pParser = new Lexer::parser(math_expr_input);
     m_root = m_pParser->parse();
     m_function_inputs = &function_inputs;
 }
@@ -105,30 +104,36 @@ float MathEvaluator<S>::Evaluate(const std::array<float, S>& inputs, bool store)
 }
 
 template <size_t S>
-float MathEvaluator<S>::Evaluate_recursive(const std::array<float, S>& inputs, tree_node* curr)
+float MathEvaluator<S>::Evaluate_recursive(const std::array<float, S>& inputs, Lexer::tree_node* curr)
 {
     float result;
     // either binary operation or function operation on single variable input
-    if (curr->type == BINARY_OP)
+    if (curr->type == Lexer::node_type::BINARY_OP)
     {
         float L = Evaluate_recursive(inputs, curr->binary_op.lhs);
         float R = Evaluate_recursive(inputs, curr->binary_op.rhs);
         // L op R
-        result = s_twoParameterFunctions.at(curr->binary_op.op_type)(L, R);
+        result = s_twoParameterFunctions.at(static_cast<int>(curr->binary_op.op_type))(L, R);
     }
     else
     {
         // either NUM or single operation
-        unary_op operation = curr->prefix_op.op;
-        if (operation == NUM_OP || operation == ID_OP)
+        Lexer::unary_op operation = curr->prefix_op.op;
+        if (operation == Lexer::unary_op::NUM_OP || operation == Lexer::unary_op::ID_OP)
         {
             // plug in number if ID, else float NUM 
-            if (operation == NUM_OP)
+            if (operation == Lexer::unary_op::NUM_OP)
             {
                 result = stof(*(curr->prefix_op.lexeme));
             }
             else
             {
+                // shouldn't run but avoids the exception
+                if (m_function_inputs->find(*(curr->prefix_op.lexeme)) == m_function_inputs->end())
+                {
+                    __debugbreak();
+                }
+
                 result = inputs[m_function_inputs->at(*(curr->prefix_op.lexeme))];
             }
         }
@@ -137,7 +142,7 @@ float MathEvaluator<S>::Evaluate_recursive(const std::array<float, S>& inputs, t
             // compute child then op(CHILD)
             float child = Evaluate_recursive(inputs, curr->prefix_op.next);
             // op(child)
-            result = s_oneParameterFunctions.at(curr->prefix_op.op)(child);
+            result = s_oneParameterFunctions.at(static_cast<int>(curr->prefix_op.op))(child);
         }
     }
 
@@ -147,43 +152,44 @@ float MathEvaluator<S>::Evaluate_recursive(const std::array<float, S>& inputs, t
 
 
 // overload computation funcs
-float add(float t1, float t2)
+inline float add(float t1, float t2)
 {
     return t1 + t2;
 }
 
-float sub(float t1, float t2)
+inline float sub(float t1, float t2)
 {
     return t1 - t2;
 }
 
-float mult(float t1, float t2)
+inline float mult(float t1, float t2)
 {
     return t1 * t2;
 }
 
-float divide(float t1, float t2)
+inline float divide(float t1, float t2)
 {
     return t1 / t2;
 }
 
-float func_exp(float t1)
+inline float func_exp(float t1)
 {
     return expf(t1);
 }
 
-float func_sin(float t1)
+inline float func_sin(float t1)
 {
     return sinf(t1);
 }
 
-float func_cos(float t1)
+inline float func_cos(float t1)
 {
     return cosf(t1);
 }
 
 
 
+// setup function pointers used during function evaluation
 template <size_t S>
 void MathEvaluator<S>::Setup(void)
 {
