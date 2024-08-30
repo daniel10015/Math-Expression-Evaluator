@@ -5,57 +5,64 @@
 #include <vector>
 #include <string>
 
-class InputBuffer
+namespace Lexer
 {
-public:
-	void GetChar(char&);
-	char UngetChar(char);
-	std::string UngetString(std::string);
-	bool EndOfInput();
-	void PassInput(std::string);
-private:
-	std::vector<char> input_buffer;
-};
+
+	
 
 #define KEYWORDS_COUNT 7
-typedef enum
-{
-	END_OF_FILE = 0,
-	EXP, SIN, COS, TAN, ARCSIN, ARCCOS, ARCTAN, // append more keywords HERE and don't forget to update KEYWORD_COUNT
-	NUM, ID, VAR, EQUAL, NOT_EQUAL, PLUS, MINUS,
-	MULT, DIV, COMMA, LPAREN, RPAREN, LBRAC, RBRAC, LESS, GREATER,
-	ERROR
-} TokenType;
+	enum class TokenType : unsigned char
+	{
+		END_OF_FILE = 0,
+		EXP, SIN, COS, TAN, ARCSIN, ARCCOS, ARCTAN, // append more keywords HERE and don't forget to update KEYWORD_COUNT
+		NUM, ID, VAR, EQUAL, NOT_EQUAL, PLUS, MINUS,
+		MULT, DIV, COMMA, LPAREN, RPAREN, LBRAC, RBRAC, LESS, GREATER,
+		TOKEN_TYPE_ERROR
+	};
 
-class Token
-{
-public:
-	void Print(); // print tok info to stdout
-	std::string lexeme;
-	TokenType token_type;
-	int line_no; // number in the input		
-};
+	class InputBuffer
+	{
+	public:
+		void GetChar(char&);
+		char UngetChar(char);
+		std::string UngetString(std::string);
+		bool EndOfInput();
+		void PassInput(std::string);
+	private:
+		std::vector<char> input_buffer;
+	};
 
-class LexicalAnalyzer
-{
-public:
-	Token GetToken();
-	Token peek(int);
-	LexicalAnalyzer(std::string input = "");
-	inline size_t GetNumOfToks() { return tokenList.size(); }
-private:
-	bool PassInput(std::string); // returns true upon success
-	std::vector<Token> tokenList;
-	Token GetTokenMain();
-	int line_no;
-	int index;
-	Token tmp;
-	InputBuffer input;
+	class Token
+	{
+	public:
+		void Print(); // print tok info to stdout
+		std::string lexeme;
+		TokenType token_type; // HERE (should be TokenType)
+		int line_no; // number in the input		
+	};
 
-	bool SkipSpace(); // remove whitespace
-	int FindKeywordIndex(std::string);
-	Token ScanId();
-	Token ScanNumber(); // is it ID or number
-};
+	class LexicalAnalyzer
+	{
+	public:
+		Token GetToken();
+		Token peek(int);
+		LexicalAnalyzer(std::string input = "");
+		inline size_t GetNumOfToks() { return tokenList.size(); }
+	private:
+		bool PassInput(std::string); // returns true upon success
+		std::vector<Token> tokenList;
+		Token GetTokenMain();
+		int line_no;
+		int index;
+		Token tmp;
+		InputBuffer input;
+
+		bool SkipSpace(); // remove whitespace
+		int FindKeywordIndex(std::string);
+		Token ScanId();
+		Token ScanNumber(); // is it ID or number
+	};
+
+}
 
 #endif // LEXER_H
