@@ -21,12 +21,13 @@ int main(int argc, char** argv)
 	inputs[0] = 1.0f;
 
 	double avg_ns_noCache;
-	double avg_ns_cache;
+	double avg_ns_cache = 0.0;
+	const size_t ITERATIONS = 1000000;
 
 	std::chrono::time_point< std::chrono::high_resolution_clock> time = std::chrono::high_resolution_clock::now();
-	for (size_t i = 0; i < 50000; i++)
+	for (size_t i = 0; i < ITERATIONS; i++)
 	{
-		inputs[0] = (i % 20);
+		inputs[0] = (i % ITERATIONS);
 		//std::cout << compute.Evaluate(inputs) << std::endl
 		//inputs[0] = i;
 		compute.Evaluate(inputs);
@@ -35,11 +36,11 @@ int main(int argc, char** argv)
 		time = currentTime; // update current time
 		avg_ns_noCache = elapsed_time.count(); // print time diff
 	}
-
+	/*
 	time = std::chrono::high_resolution_clock::now();
-	for (size_t i = 0; i < 50000; i++)
+	for (size_t i = 0; i < ITERATIONS; i++)
 	{
-		inputs[0] = (i % 20);
+		inputs[0] = (i % ITERATIONS);
 		//inputs[0] = i;
 		//std::cout << compute.Evaluate(inputs, true) << std::endl;
 		compute.Evaluate(inputs, true);
@@ -47,11 +48,11 @@ int main(int argc, char** argv)
 		auto elapsed_time = std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - time); // time diff
 		time = currentTime; // update current time
 		avg_ns_cache = elapsed_time.count(); // print time diff
-	}
+	}*/
 
-	std::cout << "results (50000 iterations)\n" << "avg cache: " << avg_ns_cache / 50000.0 << "ns" << std::endl << "avg no cache : " << avg_ns_noCache / 50000.0 << "ns" << std::endl;
+	std::cout << "results (500 iterations)\n" << "avg cache: " << avg_ns_cache / ITERATIONS << "ns" << std::endl << "avg no cache : " << avg_ns_noCache / ITERATIONS << "ns" << std::endl;
 	std::cin.get();
-	
+
 
 	return 0;
 }

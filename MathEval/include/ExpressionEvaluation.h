@@ -50,6 +50,8 @@ private:
 	parser* m_pParser;
 	tree_node* m_root;
 	std::unordered_map<std::array<float, S>, float> m_cache;
+    std::unordered_map<std::string, float> m_cache_constants;
+    void ConvertConstantsToFloats();
 	std::unordered_map<std::string, size_t> *m_function_inputs;
 	// function pointer array
 	// 2-parameter functions
@@ -82,6 +84,7 @@ MathEvaluator<S>::MathEvaluator(const std::string& math_expr_input, std::unorder
     m_pParser = new parser(math_expr_input);
     m_root = m_pParser->parse();
     m_function_inputs = &function_inputs;
+    ConvertConstantsToFloats();
 }
 
 
@@ -125,7 +128,7 @@ float MathEvaluator<S>::Evaluate_recursive(const std::array<float, S>& inputs, t
             // plug in number if ID, else float NUM 
             if (operation == NUM_OP)
             {
-                result = stof(*(curr->prefix_op.lexeme));
+                result = m_cache_constants.at(*(curr->prefix_op.lexeme));
             }
             else
             {
@@ -144,7 +147,33 @@ float MathEvaluator<S>::Evaluate_recursive(const std::array<float, S>& inputs, t
     return result;
 }
 
+template <size_t S>
+void  MathEvaluator<S>::ConvertConstantsToFloats()
+{
+    std::queue<tree_node*> q;
+    q.push(m_root);
+    while (!q.empty())
+    {
+        // check top of queue
+        auto n = q.front();
+        q.pop();
 
+        // recursive call
+        if (n->type == BINARY_OP)
+        {
+            q.push(n->binary_op.lhs);
+            q.push(n->binary_op.rhs);
+        }
+        else if (n->prefix_op.next != nullptr)
+        {
+            q.push(n->prefix_op.next);
+        }
+        else if (n->prefix_op.op == NUM_OP)
+        {
+            m_cache_constants[*(n->prefix_op.lexeme)] = stof(*(n->prefix_op.lexeme));
+        }
+    }
+}
 
 // overload computation funcs
 float add(float t1, float t2)
