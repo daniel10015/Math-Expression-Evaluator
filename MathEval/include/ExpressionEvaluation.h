@@ -104,6 +104,7 @@ float MathEvaluator<S>::Evaluate(const std::array<float, S>& inputs, bool store)
     {
         m_cache[inputs] = result;
     }
+    return result;
 }
 
 template <size_t S>
@@ -155,7 +156,7 @@ float MathEvaluator<S>::Evaluate_recursive(const std::array<float, S>& inputs, L
 template <size_t S>
 void  MathEvaluator<S>::ConvertConstantsToFloats()
 {
-    std::queue<tree_node*> q;
+    std::queue<Lexer::tree_node*> q;
     q.push(m_root);
     while (!q.empty())
     {
@@ -164,7 +165,7 @@ void  MathEvaluator<S>::ConvertConstantsToFloats()
         q.pop();
 
         // recursive call
-        if (n->type == BINARY_OP)
+        if (n->type == Lexer::node_type::BINARY_OP)
         {
             q.push(n->binary_op.lhs);
             q.push(n->binary_op.rhs);
@@ -173,7 +174,7 @@ void  MathEvaluator<S>::ConvertConstantsToFloats()
         {
             q.push(n->prefix_op.next);
         }
-        else if (n->prefix_op.op == NUM_OP)
+        else if (n->prefix_op.op == Lexer::unary_op::NUM_OP)
         {
             m_cache_constants[*(n->prefix_op.lexeme)] = stof(*(n->prefix_op.lexeme));
         }
